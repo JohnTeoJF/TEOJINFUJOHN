@@ -51,6 +51,18 @@
         <plugin>
           <artifactId>maven-jar-plugin</artifactId>
           <version>3.0.2</version>
+
+        <!-- START: Main class to start by executing "java -jar" -->
+        <configuration>
+          <archive>
+            <manifest>
+              <addClasspath>true</addClasspath>
+              <mainClass>myserver.Main</mainClass>
+            </manifest>
+          </archive>
+        </configuration>
+        <!-- END: Main class to start by executing "java -jar" -->
+
         </plugin>
         <plugin>
           <artifactId>maven-install-plugin</artifactId>
