@@ -34,7 +34,7 @@ public class HttpClientConnection implements Runnable {
 				
 		System.out.println("\n__________________\n");
 		System.out.println("docRoot received from client is :"+dRoot);
-		System.out.println("\n__________________");
+		System.out.println("__________________");
 	}
 
 	@Override
@@ -58,13 +58,14 @@ public class HttpClientConnection implements Runnable {
 				
 			System.out.println("\n__________________\n");
 			System.out.println("Packet received from client is :"+packet);
-			System.out.println("\n__________________");
+			System.out.println("__________________");
 		
 			//check if request is not null
 			if(packet != null)
 			{
 		
 				System.out.println("[SERVER - CLIENT"+clientID+"]> Received a request: " + packet);
+		
 
 				/** HTTP Request Format:
 				 * GET index.html HTTP/1.0 CRLF
@@ -150,7 +151,7 @@ public class HttpClientConnection implements Runnable {
 							socketOutStream.writeBytes(CRLF);
 							
 							//send content of the errorFile
-							socketOutStream.writeBytes(getErrorFile());
+						socketOutStream.writeBytes(getErrorFile(404,responseLine));
 							
 							System.out.println("[SERVER - CLIENT"+clientID+"]> Sending Response with status line: " + responseLine);
 							
@@ -165,13 +166,31 @@ public class HttpClientConnection implements Runnable {
 						System.err.println("[SERVER - CLIENT"+clientID+"]> EXCEPTION in processing request." + e.getMessage());
 					}
 				} else {
-					System.err.println("[SERVER - CLIENT"+clientID+"]> Invalid HTTP GET Request. " + msgParts[0]);
+						//write a status line on the response with 405 Method not Allowed
+						String responseLine = "HTTP/1.0" + SP + "405" + SP + "Method not Allowed" + CRLF;
+						socketOutStream.writeBytes(responseLine);
+
+						//write content type header line
+						socketOutStream.writeBytes("Content-type: text/html" + CRLF);
+						
+						//write a blank line representing end of response header
+						socketOutStream.writeBytes(CRLF);
+						
+						//send content of the errorFile
+						socketOutStream.writeBytes(getErrorFile(405,responseLine));
+						
+						System.out.println("[SERVER - CLIENT"+clientID+"]> Sending Response with status line: " + responseLine);
+						
+						//flush outputstream
+						socketOutStream.flush();
+						System.out.println("[SERVER - CLIENT"+clientID+"]> HTTP Response sent");
 				}
 			}
 			else
 			{
-				//Discard those unknown requests.
-				System.err.println("[SERVER - CLIENT"+clientID+"]> Discarding unknown and HTTP request.");
+				//Discard any unknown packets
+				System.err.println("[SERVER - CLIENT"+clientID+"]> Discarding unknown HTTP request.");		
+
 			}
 
 		} catch (IOException e) 
@@ -220,18 +239,18 @@ public class HttpClientConnection implements Runnable {
 	 * Get content of a general 404 error file
 	 * @return errorFile content
 	 */
-	private String getErrorFile ()
+	private String getErrorFile (int err,String x)
 	{
 		String errorFileContent = 	"<!doctype html>" + "\n" +
 									"<html lang=\"en\">" + "\n" +
 									"<head>" + "\n" +
 									"    <meta charset=\"UTF-8\">" + "\n" +
-									"    <title>Error 404</title>" + "\n" +
+									"    <title>Error "+ err+"</title>" + "\n" +
 									"</head>" + "\n" +
 									"<body>" + "\n" +
-									"    <b>ErrorCode:</b> 404" + "\n" +
+									"    <b>Error Code:</b> "+err+ "\n" +
 									"    <br>" + "\n" +
-									"    <b>Error Message:</b> The requested file does not exist on this server." + "\n" +
+									"    <b>Error Message:</b> "+x+"." + "\n" +
 									"</body>" + "\n" +
 									"</html>";
 		return errorFileContent;
